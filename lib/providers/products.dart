@@ -6,7 +6,7 @@ import 'product.dart';
 class Products with ChangeNotifier {
   // ignore: prefer_final_fields
   List<Product> _items = [
-    Product(
+    /* Product(
       id: 'p1',
       title: 'Red Shirt',
       description: 'A red shirt - it is pretty red!',
@@ -37,9 +37,9 @@ class Products with ChangeNotifier {
       price: 49.99,
       imageUrl:
           'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
-    ),
+    ),*/
   ];
-
+//https://expertphotography.b-cdn.net/wp-content/uploads/2022/03/apps-to-change-background-smartphone-table.jpeg
   List<Product> get items {
     return [..._items];
   }
@@ -52,12 +52,44 @@ class Products with ChangeNotifier {
     return _items.firstWhere((prod) => prod.id == id);
   }
 
+  Future<void> fetchAndSetProducts() async {
+    const ws_url = 'https://flutter-itt-default-rtdb.firebaseio.com';
+    const ws_path = '/products.json';
+    final api_url = Uri.parse(ws_url + ws_path);
+
+    try {
+      final response = await http.get(api_url);
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+
+      final List<Product> loadedProducts = [];
+      extractedData.forEach((prodId, prodData) {
+        loadedProducts.add(
+          Product(
+            id: prodId,
+            title: prodData['title'],
+            description: prodData['description'],
+            price: prodData['price'],
+            imageUrl: prodData['imageUrl'],
+            isFavorite: prodData['isFavorite'],
+          ),
+        );
+      });
+
+      _items = loadedProducts;
+
+      //print(json.decode(response.body));
+      notifyListeners();
+    } catch (error) {
+      print(error);
+      throw error;
+    }
+  }
+
   Future<void> addProduct(Product product) async {
     const ws_url = 'https://flutter-itt-default-rtdb.firebaseio.com';
     const ws_path = '/products.json';
 
     final api_url = Uri.parse(ws_url + ws_path);
-    //final api_url = Uri.https(ws_url, ws_path);
 
     final ws_body = jsonEncode({
       'title': product.title,
@@ -67,13 +99,13 @@ class Products with ChangeNotifier {
       'isFavorite': product.isFavorite,
     });
 
-    return http
-        .post(
-      api_url,
-      headers: {"Content-Type": "application/json"},
-      body: ws_body,
-    )
-        .then((response) {
+    try {
+      final response = await http.post(
+        api_url,
+        headers: {"Content-Type": "application/json"},
+        body: ws_body,
+      );
+
       print(ws_body);
       print(response);
       print(json.decode(response.body));
@@ -89,10 +121,10 @@ class Products with ChangeNotifier {
       _items.add(newProduct);
       //_items.insert(0, newProduct);
       notifyListeners();
-    }).catchError((error) {
-      print(error);
+    } catch (error) {
+      print("error: " + error.toString());
       throw error;
-    });
+    }
   }
 
   void updateProduct(String id, Product newProduct) {

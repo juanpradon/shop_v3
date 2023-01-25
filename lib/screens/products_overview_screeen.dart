@@ -19,13 +19,42 @@ class ProductsOverviewScreen extends StatefulWidget {
   State<ProductsOverviewScreen> createState() => _ProductsOverviewScreenState();
 }
 
-var _showOnlyeFavorites = false;
-
 class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
+  var _showOnlyFavorites = false;
+  var _isInit = true;
+  var _isLoading = false;
+
+  @override
+  void initState() {
+    /*  Future.delayed(Duration.zero).then((_) {
+      Provider.of<Products>(context).fetchAndSetProducts();
+    });*/
+
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    if (_isInit) {
+      setState(() {
+        _isLoading = true;
+      });
+      Provider.of<Products>(context).fetchAndSetProducts().then((_) {
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    }
+    _isInit = false;
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+  }
+
   @override
   Widget build(BuildContext context) {
     //final productsContainer = Provider.of<Products>(context, listen: false);
-    print('_showOnlyeFavorites: ' + _showOnlyeFavorites.toString());
+    print('_showOnlyFavorites: ' + _showOnlyFavorites.toString());
 
     return Scaffold(
       appBar: AppBar(
@@ -37,10 +66,10 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
 
               setState(() {
                 if (selectedValue == FilterOptions.Favorites) {
-                  _showOnlyeFavorites = true;
+                  _showOnlyFavorites = true;
                   //        productsContainer.showFavoriteOnly();
                 } else {
-                  _showOnlyeFavorites = false;
+                  _showOnlyFavorites = false;
                   //           productsContainer.showAll();
                 }
               });
@@ -74,9 +103,13 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
         ],
       ),
       drawer: AppDrawer(),
-      body: ProductsGrid(
-        showFavs: _showOnlyeFavorites,
-      ),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : ProductsGrid(
+              showFavs: _showOnlyFavorites,
+            ),
     );
   }
 }
